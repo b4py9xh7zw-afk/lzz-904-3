@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>旅行 Vlog 调色助手</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🎒%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🎒 旅行 Vlog 调色助手</div>
+    <div class="steps">
+      <span class="step active" data-step="1">1 上传片段</span>
+      <span class="sep">›</span>
+      <span class="step" data-step="2">2 抽帧对比</span>
+      <span class="sep">›</span>
+      <span class="step" data-step="3">3 保存方案</span>
+      <span class="sep">›</span>
+      <span class="step" data-step="4">4 生成 Windows 命令</span>
+    </div>
+    <div id="envBadge" class="env-badge" title="服务器 ffmpeg 状态">检测中…</div>
+  </header>
+
+  <main class="layout">
+    <!-- 左栏：上传 + 预设 + 微调 -->
+    <section class="panel left">
+      <div class="card" id="uploadCard">
+        <h2>① 上传视频片段</h2>
+        <label class="scene-picker" id="scenePicker">
+          <span>片段类型</span>
+          <div class="seg" id="sceneSeg">
+            <button type="button" data-scene="beach" class="active">🌊 海边</button>
+            <button type="button" data-scene="city">🏙️ 城市</button>
+            <button type="button" data-scene="night">🌃 夜景</button>
+          </div>
+        </label>
+        <div class="dropzone" id="dropzone" tabindex="0">
+          <input type="file" id="fileInput" accept="video/*" hidden />
+          <div class="dz-icon">⬆️</div>
+          <p><strong>点击选择</strong> 或拖拽视频到此处</p>
+          <p class="muted">推荐 MP4/MOV，浏览器本地抽 5 帧，不上传整段视频</p>
+          <div class="progress hidden" id="progressWrap">
+            <div class="bar"><div id="progressBar"></div></div>
+            <span id="progressText">0%</span>
+          </div>
+        </div>
+        <p class="hint" id="uploadHint"></p>
+      </div>
+
+      <div class="card disabled-card" id="presetCard">
+        <h2>② 选择滤镜预设</h2>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+
+      <div class="card disabled-card" id="tuneCard">
+        <h2>③ 精细微调 <button class="btn tiny" id="resetTune" type="button">复位</button></h2>
+        <div class="sliders" id="sliders"></div>
+      </div>
+    </section>
+
+    <!-- 中栏：对比 -->
+    <section class="panel center">
+      <div class="card compare-card">
+        <h2>原图 / 滤镜 对比
+          <span class="badge" id="previewModeBadge">等待加载</span>
+        </h2>
+        <div class="frame-strip" id="frameStrip"></div>
+        <div class="comparator" id="comparator">
+          <div class="placeholder">上传视频后在此拖动对比</div>
+          <img class="layer base" id="baseImg" alt="原图" />
+          <div class="layer top-wrap" id="topWrap">
+            <img id="filteredImg" alt="滤镜效果" />
+          </div>
+          <div class="divider" id="divider"><span>⇆</span></div>
+          <div class="tag tag-original">原图</div>
+          <div class="tag tag-filtered">滤镜</div>
+        </div>
+        <p class="hint" id="compareHint"></p>
+      </div>
+    </section>
+
+    <!-- 右栏：方案 + 命令 -->
+    <section class="panel right">
+      <div class="card disabled-card" id="schemeCard">
+        <h2>④ 我的方案</h2>
+        <div class="save-row">
+          <input type="text" id="schemeName" maxlength="30" placeholder="方案名称，如：冲绳海岸 v2" />
+          <button class="btn primary" id="saveScheme" type="button">保存当前</button>
+        </div>
+        <ul class="scheme-list" id="schemeList"></ul>
+        <div class="scheme-actions">
+          <button class="btn tiny" id="exportSchemes" type="button">导出 JSON</button>
+          <label class="btn tiny file-btn">导入 JSON
+            <input type="file" id="importSchemes" accept="application/json" hidden />
+          </label>
+          <span class="muted" id="schemeCount"></span>
+        </div>
+      </div>
+
+      <div class="card disabled-card" id="cmdCard">
+        <h2>⑤ Windows ffmpeg 命令</h2>
+        <div class="path-row">
+          <label>输入视频
+            <input type="text" id="inputPath" placeholder='C:\videos\clips\my beach.mp4' />
+          </label>
+          <label>输出路径（可留空）
+            <input type="text" id="outputPath" placeholder='默认：同目录 xxx_graded.mp4' />
+          </label>
+        </div>
+        <div class="cmd-options">
+          <label class="chk"><input type="checkbox" id="optCopy" /> 快速测试（仅处理前 10 秒，-t 10）</label>
+          <span class="muted">「下载 .bat」会把全部已保存方案写入同一个批处理，逐个生成文件；单条命令使用当前选中方案。</span>
+        </div>
+        <div class="cmd-toolbar">
+          <button class="btn primary" id="generateCmd" type="button">生成命令</button>
+          <button class="btn" id="testFilter" type="button">在线试跑滤镜</button>
+          <button class="btn" id="copyCmd" type="button">复制</button>
+          <button class="btn" id="downloadBat" type="button">下载 .bat</button>
+        </div>
+        <pre class="cmd-out" id="cmdOut">选定方案并点击「生成命令」…</pre>
+        <p class="hint" id="cmdHint"></p>
+        <div class="danger-box hidden" id="failBox"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

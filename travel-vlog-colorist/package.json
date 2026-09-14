@@ -1,0 +1,23 @@
+{
+  "name": "travel-vlog-colorist",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "旅行 vlog 调色助手：抽帧对比、多方案保存、生成 Windows ffmpeg 命令",
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.3.0"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
